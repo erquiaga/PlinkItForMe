@@ -1,0 +1,15 @@
+.loading-spinner {
+  text-align: center;
+  margin: 60px auto;
+}
+
+.loading-spinner svg {
+  display: block;
+  margin: 0 auto 20px;
+}
+
+.loading-text {
+  color: #9ab;
+  font-size: 16px;
+  margin-top: 20px;
+}

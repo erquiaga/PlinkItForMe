@@ -1,0 +1,41 @@
+# Environment variables
+.env
+*.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Redis
+dump.rdb
+*.rdb
+
+# Node
+node_modules/
+dist/
+build/
+.cache/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
