@@ -35,10 +35,12 @@
 
 /* Movie Labels */
 .movie-labels {
-  width: 800px;
-  margin: 0 auto 15px;
   display: flex;
-  gap: 2px;
+  justify-content: space-around;
+  width: 800px;
+  margin: 10px auto 0 auto;
+  padding: 10px 0;
+  gap: 5px;
 }
 
 .movie-label {

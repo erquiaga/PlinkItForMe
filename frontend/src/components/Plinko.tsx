@@ -268,6 +268,8 @@ export default function Plinko({ movies }: PlinkoProps) {
         {isDropping ? 'Dropping...' : 'Drop Ball!'}
       </button>
 
+      <div ref={sceneRef} className='canvas-container' />
+
       <div className='movie-labels'>
         {movies.map((movie, index) => (
           <div key={index} className='movie-label' title={movie.title}>
@@ -275,8 +277,6 @@ export default function Plinko({ movies }: PlinkoProps) {
           </div>
         ))}
       </div>
-
-      <div ref={sceneRef} className='canvas-container' />
 
       <Modal
         open={isModalOpen}
