@@ -17,7 +17,7 @@ const COLORS = {
 
 const PHYSICS_CONFIG = {
   canvasWidth: 800,
-  canvasHeight: 600,
+  canvasHeight: 500,
   gravity: 1.2,
   pegRows: 9,
   pegSpacing: 80,
@@ -39,7 +39,7 @@ function createPegs(rows: number, spacing: number): Matter.Body[] {
     for (let col = 0; col < numPegs; col++) {
       const peg = Matter.Bodies.circle(
         70 + offset + col * spacing,
-        120 + row * 40,
+        100 + row * 40,
         PHYSICS_CONFIG.pegRadius,
         {
           isStatic: true,
@@ -55,17 +55,30 @@ function createPegs(rows: number, spacing: number): Matter.Body[] {
   return pegs;
 }
 
-function createSlots(movieCount: number, canvasWidth: number): Matter.Body[] {
+function createSlots(
+  movieCount: number,
+  canvasWidth: number,
+  canvasHeight: number
+) {
   const slotWidth = canvasWidth / movieCount;
   const slots: Matter.Body[] = [];
 
+  const slotY = canvasHeight - 40;
+  const slotHeight = 80;
+
   for (let i = 0; i <= movieCount; i++) {
-    const divider = Matter.Bodies.rectangle(i * slotWidth, 530, 3, 140, {
-      isStatic: true,
-      render: { fillStyle: COLORS.blue },
-      friction: 0.1,
-      restitution: 0.3,
-    });
+    const divider = Matter.Bodies.rectangle(
+      i * slotWidth,
+      slotY,
+      3,
+      slotHeight,
+      {
+        isStatic: true,
+        render: { fillStyle: COLORS.blue },
+        friction: 0.1,
+        restitution: 0.3,
+      }
+    );
     slots.push(divider);
   }
 
@@ -140,7 +153,11 @@ export default function Plinko({ movies }: PlinkoProps) {
       PHYSICS_CONFIG.canvasHeight
     );
     const pegs = createPegs(PHYSICS_CONFIG.pegRows, PHYSICS_CONFIG.pegSpacing);
-    const slots = createSlots(movies.length, PHYSICS_CONFIG.canvasWidth);
+    const slots = createSlots(
+      movies.length,
+      PHYSICS_CONFIG.canvasWidth,
+      PHYSICS_CONFIG.canvasHeight
+    );
 
     Matter.World.add(engine.world, [
       ground,
@@ -174,8 +191,10 @@ export default function Plinko({ movies }: PlinkoProps) {
       const balls = engine.world.bodies.filter((body) => body.label === 'ball');
 
       balls.forEach((ball) => {
+        const settlementY = PHYSICS_CONFIG.canvasHeight - 100;
+
         const isSettled =
-          ball.position.y > 520 &&
+          ball.position.y > settlementY &&
           Math.abs(ball.velocity.x) < 0.5 &&
           Math.abs(ball.velocity.y) < 0.5;
 
@@ -197,7 +216,7 @@ export default function Plinko({ movies }: PlinkoProps) {
         }
 
         const isOutOfBounds =
-          ball.position.y > 650 ||
+          ball.position.y > PHYSICS_CONFIG.canvasHeight + 50 ||
           ball.position.y < 0 ||
           ball.position.x < 0 ||
           ball.position.x > PHYSICS_CONFIG.canvasWidth;

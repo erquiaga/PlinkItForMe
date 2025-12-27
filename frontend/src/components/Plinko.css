@@ -1,7 +1,7 @@
 /* Plinko Container */
 .plinko-container {
   text-align: center;
-  margin: 40px auto;
+  margin: 20px auto; /* Reduced from 40px to bring everything closer */
   max-width: 800px;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -11,7 +11,7 @@
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 15px; /* Reduced from 20px */
   cursor: pointer;
   background-color: #00e054;
   color: #fff;
@@ -33,6 +33,15 @@
   opacity: 0.6;
 }
 
+/* Canvas Container - Add border and glow */
+.canvas-container {
+  border: 3px solid #40bcf4; /* Blue border */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(64, 188, 244, 0.2),
+    /* Outer glow */ inset 0 0 40px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
+}
+
 /* Movie Labels */
 .movie-labels {
   display: flex;
@@ -52,14 +61,12 @@
   white-space: nowrap;
   color: #9ab;
   background-color: #2c3440;
-  border-radius: 4px 4px 0 0;
+  border-radius: 4px;
   font-weight: 500;
 }
 
-/* Canvas Container */
-.canvas-container {
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
+.movie-label:hover {
+  color: #00e054; /* Add hover effect */
 }
 
 /* Modal Styles */
