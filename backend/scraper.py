@@ -7,15 +7,19 @@ from bs4 import BeautifulSoup
 import requests
 import os
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 load_dotenv()
 
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+url = urlparse(redis_url)
+
 redis_client = redis.Redis(
-    host='localhost', 
-    port=6379, 
+    host=url.hostname or 'localhost',
+    port=url.port or 6379,
+    password=url.password,
     decode_responses=True
 )
-
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 if not TMDB_API_KEY:
     raise ValueError("TMDB_API_KEY not found in environment variables. Please check your .env file.")
