@@ -128,44 +128,10 @@ Frontend will be running at `http://localhost:5173`
 4. **Watch the physics** as the ball bounces through pegs
 5. **See your movie!** A modal will appear with the randomly selected film
 
-### Pro Tips:
+### FYIs:
 
 - Cache expires after 6 hours, ensuring fresh data
-- Sound effects make it more satisfying!
 - Works with any public Letterboxd watchlist
-
-## Project Structure
-
-```
-plinkitforme/
-├── backend/
-│   ├── app.py              # FastAPI application
-│   ├── scraper.py          # Async Letterboxd scraper with Redis caching
-│   ├── requirements.txt    # Python dependencies
-│   ├── .env.example        # Environment variables template
-│   └── .env                # Your API keys (gitignored!)
-│
-├── frontend/
-│   ├── public/
-│   │   └── sounds/         # Sound effect files
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Plinko.tsx       # Main Plinko game component
-│   │   │   ├── Plinko.css
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   └── LoadingSpinner.css
-│   │   ├── api/
-│   │   │   └── Api.ts      # API client
-│   │   ├── App.tsx         # Main app component
-│   │   ├── App.css
-│   │   └── main.tsx
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── .gitignore
-├── README.md
-└── LICENSE
-```
 
 ## ⚡ Performance
 

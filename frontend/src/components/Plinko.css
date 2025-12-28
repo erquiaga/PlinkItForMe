@@ -1,24 +1,37 @@
 /* Plinko Container */
 .plinko-container {
   text-align: center;
-  margin: 20px auto; /* Reduced from 40px to bring everything closer */
+  margin: 20px auto;
   max-width: 800px;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* Drop Button */
-.drop-button {
+/* Button Container */
+.button-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Shared Button Styles */
+.drop-button,
+.shuffle-button {
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 15px; /* Reduced from 20px */
-  cursor: pointer;
-  background-color: #00e054;
-  color: #fff;
   border: none;
   border-radius: 6px;
+  cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 150px;
+  color: #fff;
+}
+
+/* Drop Button */
+.drop-button {
+  background-color: #00e054;
 }
 
 .drop-button:hover:not(:disabled) {
@@ -33,13 +46,30 @@
   opacity: 0.6;
 }
 
-/* Canvas Container - Add border and glow */
+/* Shuffle Button */
+.shuffle-button {
+  background-color: #ff8000;
+}
+
+.shuffle-button:hover:not(:disabled) {
+  background-color: #ff9500;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.shuffle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Canvas Container */
 .canvas-container {
-  border: 3px solid #40bcf4; /* Blue border */
+  border: 3px solid #40bcf4;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(64, 188, 244, 0.2),
-    /* Outer glow */ inset 0 0 40px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
+    inset 0 0 40px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
 }
 
 /* Movie Labels */
@@ -66,7 +96,7 @@
 }
 
 .movie-label:hover {
-  color: #00e054; /* Add hover effect */
+  color: #00e054;
 }
 
 /* Modal Styles */
@@ -159,7 +189,7 @@
   opacity: 1;
 }
 
-/* No poster placeholder (from before) */
+/* No poster placeholder */
 .modal-poster-placeholder {
   width: 230px;
   height: 345px;
@@ -225,4 +255,30 @@
   background-color: #00e054;
   color: #fff;
   transform: translateY(-1px);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .movie-labels {
+    font-size: 10px;
+    gap: 2px;
+    width: 100%;
+  }
+
+  .movie-label {
+    padding: 4px 2px;
+    max-width: none;
+  }
+
+  .button-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .drop-button,
+  .shuffle-button {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px 20px;
+  }
 }

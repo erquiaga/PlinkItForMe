@@ -15,7 +15,7 @@ const COLORS = {
   background: '#14181c',
 };
 
-const PHYSICS_CONFIG = {
+const BASE_CONFIG = {
   canvasWidth: 800,
   canvasHeight: 500,
   gravity: 1.2,
@@ -29,7 +29,31 @@ const PHYSICS_CONFIG = {
   ballDensity: 0.0008,
 };
 
-function createPegs(rows: number, spacing: number): Matter.Body[] {
+function getResponsiveConfig() {
+  const windowWidth = window.innerWidth;
+  const scale = windowWidth < 600 ? windowWidth / 800 : 1;
+
+  return {
+    canvasWidth: BASE_CONFIG.canvasWidth * scale,
+    canvasHeight: BASE_CONFIG.canvasHeight * scale,
+    gravity: BASE_CONFIG.gravity,
+    pegRows: BASE_CONFIG.pegRows,
+    pegSpacing: BASE_CONFIG.pegSpacing * scale,
+    pegRadius: BASE_CONFIG.pegRadius * scale,
+    ballRadius: BASE_CONFIG.ballRadius * scale,
+    ballRestitution: BASE_CONFIG.ballRestitution,
+    ballFriction: BASE_CONFIG.ballFriction,
+    ballAirResistance: BASE_CONFIG.ballAirResistance,
+    ballDensity: BASE_CONFIG.ballDensity,
+    scale,
+  };
+}
+
+function createPegs(
+  rows: number,
+  spacing: number,
+  config: ReturnType<typeof getResponsiveConfig>
+): Matter.Body[] {
   const pegs: Matter.Body[] = [];
 
   for (let row = 0; row < rows; row++) {
@@ -38,9 +62,9 @@ function createPegs(rows: number, spacing: number): Matter.Body[] {
 
     for (let col = 0; col < numPegs; col++) {
       const peg = Matter.Bodies.circle(
-        70 + offset + col * spacing,
-        100 + row * 40,
-        PHYSICS_CONFIG.pegRadius,
+        70 * config.scale + offset + col * spacing,
+        100 * config.scale + row * 40 * config.scale,
+        config.pegRadius,
         {
           isStatic: true,
           restitution: 0.6,
@@ -58,19 +82,20 @@ function createPegs(rows: number, spacing: number): Matter.Body[] {
 function createSlots(
   movieCount: number,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  scale: number
 ) {
   const slotWidth = canvasWidth / movieCount;
   const slots: Matter.Body[] = [];
 
-  const slotY = canvasHeight - 40;
-  const slotHeight = 80;
+  const slotY = canvasHeight - 40 * scale;
+  const slotHeight = 80 * scale;
 
   for (let i = 0; i <= movieCount; i++) {
     const divider = Matter.Bodies.rectangle(
       i * slotWidth,
       slotY,
-      3,
+      3 * scale,
       slotHeight,
       {
         isStatic: true,
@@ -114,16 +139,40 @@ function createStaticBodies(canvasWidth: number, canvasHeight: number) {
   };
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
 export default function Plinko({ movies }: PlinkoProps) {
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Matter.Engine | null>(null);
   const popSoundRef = useRef<HTMLAudioElement | null>(null);
   const coinSoundRef = useRef<HTMLAudioElement | null>(null);
   const lastSoundTime = useRef(0);
+  const [shuffledMovies, setShuffledMovies] = useState<Movie[]>(movies);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isDropping, setIsDropping] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
+  const [config, setConfig] = useState(getResponsiveConfig());
+
+  useEffect(() => {
+    setShuffledMovies(movies);
+  }, [movies]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setConfig(getResponsiveConfig());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!sceneRef.current) return;
@@ -136,28 +185,29 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     const engine = Matter.Engine.create();
     engineRef.current = engine;
-    engine.world.gravity.y = PHYSICS_CONFIG.gravity;
+    engine.world.gravity.y = config.gravity;
 
     const render = Matter.Render.create({
       element: sceneRef.current,
       engine: engine,
       options: {
-        width: PHYSICS_CONFIG.canvasWidth,
-        height: PHYSICS_CONFIG.canvasHeight,
+        width: config.canvasWidth,
+        height: config.canvasHeight,
         wireframes: false,
         background: COLORS.background,
       },
     });
 
     const { ground, leftWall, rightWall } = createStaticBodies(
-      PHYSICS_CONFIG.canvasWidth,
-      PHYSICS_CONFIG.canvasHeight
+      config.canvasWidth,
+      config.canvasHeight
     );
-    const pegs = createPegs(PHYSICS_CONFIG.pegRows, PHYSICS_CONFIG.pegSpacing);
+    const pegs = createPegs(config.pegRows, config.pegSpacing, config);
     const slots = createSlots(
-      movies.length,
-      PHYSICS_CONFIG.canvasWidth,
-      PHYSICS_CONFIG.canvasHeight
+      shuffledMovies.length,
+      config.canvasWidth,
+      config.canvasHeight,
+      config.scale
     );
 
     Matter.World.add(engine.world, [
@@ -186,13 +236,13 @@ export default function Plinko({ movies }: PlinkoProps) {
       });
     });
 
-    const slotWidth = PHYSICS_CONFIG.canvasWidth / movies.length;
+    const slotWidth = config.canvasWidth / shuffledMovies.length;
 
     Matter.Events.on(engine, 'afterUpdate', () => {
       const balls = engine.world.bodies.filter((body) => body.label === 'ball');
 
       balls.forEach((ball) => {
-        const settlementY = PHYSICS_CONFIG.canvasHeight - 100;
+        const settlementY = config.canvasHeight - 100 * config.scale;
 
         const isSettled =
           ball.position.y > settlementY &&
@@ -202,8 +252,8 @@ export default function Plinko({ movies }: PlinkoProps) {
         if (isSettled) {
           const slotIndex = Math.floor(ball.position.x / slotWidth);
 
-          if (slotIndex >= 0 && slotIndex < movies.length) {
-            setSelectedMovie(movies[slotIndex]);
+          if (slotIndex >= 0 && slotIndex < shuffledMovies.length) {
+            setSelectedMovie(shuffledMovies[slotIndex]);
             setIsModalOpen(true);
 
             if (coinSoundRef.current) {
@@ -217,10 +267,10 @@ export default function Plinko({ movies }: PlinkoProps) {
         }
 
         const isOutOfBounds =
-          ball.position.y > PHYSICS_CONFIG.canvasHeight + 50 ||
+          ball.position.y > config.canvasHeight + 50 ||
           ball.position.y < 0 ||
           ball.position.x < 0 ||
-          ball.position.x > PHYSICS_CONFIG.canvasWidth;
+          ball.position.x > config.canvasWidth;
 
         if (isOutOfBounds) {
           Matter.World.remove(engine.world, ball);
@@ -239,13 +289,14 @@ export default function Plinko({ movies }: PlinkoProps) {
       Matter.Engine.clear(engine);
       if (render.canvas) render.canvas.remove();
     };
-  }, [movies]);
+  }, [shuffledMovies, config]);
 
   useEffect(() => {
     if (selectedMovie) {
       setPosterLoaded(false);
     }
   }, [selectedMovie]);
+
   const dropBall = () => {
     if (!engineRef.current || isDropping) return;
 
@@ -260,15 +311,15 @@ export default function Plinko({ movies }: PlinkoProps) {
     engineRef.current.timing.timeScale = 1;
 
     const ball = Matter.Bodies.circle(
-      200 + Math.random() * 400,
-      50,
-      PHYSICS_CONFIG.ballRadius,
+      200 * config.scale + Math.random() * 400 * config.scale,
+      50 * config.scale,
+      config.ballRadius,
       {
         isStatic: false,
-        restitution: PHYSICS_CONFIG.ballRestitution,
-        friction: PHYSICS_CONFIG.ballFriction,
-        frictionAir: PHYSICS_CONFIG.ballAirResistance,
-        density: PHYSICS_CONFIG.ballDensity,
+        restitution: config.ballRestitution,
+        friction: config.ballFriction,
+        frictionAir: config.ballAirResistance,
+        density: config.ballDensity,
         render: { fillStyle: COLORS.green },
         label: 'ball',
       }
@@ -283,20 +334,39 @@ export default function Plinko({ movies }: PlinkoProps) {
     Matter.World.add(world, ball);
   };
 
+  const handleShuffle = () => {
+    if (isDropping) return;
+    setShuffledMovies(shuffleArray(shuffledMovies));
+    setSelectedMovie(null);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
 
   return (
     <div className='plinko-container'>
-      <button onClick={dropBall} disabled={isDropping} className='drop-button'>
-        {isDropping ? 'Dropping...' : 'Drop Ball!'}
-      </button>
+      <div className='button-container'>
+        <button
+          onClick={dropBall}
+          disabled={isDropping}
+          className='drop-button'
+        >
+          {isDropping ? 'Dropping...' : 'Drop Ball!'}
+        </button>
+        <button
+          onClick={handleShuffle}
+          disabled={isDropping}
+          className='shuffle-button'
+        >
+          🔀 Shuffle
+        </button>
+      </div>
 
       <div ref={sceneRef} className='canvas-container' />
 
       <div className='movie-labels'>
-        {movies.map((movie, index) => (
+        {shuffledMovies.map((movie, index) => (
           <div key={index} className='movie-label' title={movie.title}>
             {movie.title}
           </div>
@@ -325,7 +395,7 @@ export default function Plinko({ movies }: PlinkoProps) {
                   alt={selectedMovie.title}
                   className={`modal-poster ${posterLoaded ? 'loaded' : ''}`}
                   onLoad={() => setPosterLoaded(true)}
-                  onError={() => setPosterLoaded(true)} // Handle load errors
+                  onError={() => setPosterLoaded(true)}
                 />
               </div>
             ) : (
