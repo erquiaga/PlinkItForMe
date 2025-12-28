@@ -123,6 +123,7 @@ export default function Plinko({ movies }: PlinkoProps) {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isDropping, setIsDropping] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [posterLoaded, setPosterLoaded] = useState(false);
 
   useEffect(() => {
     if (!sceneRef.current) return;
@@ -240,6 +241,11 @@ export default function Plinko({ movies }: PlinkoProps) {
     };
   }, [movies]);
 
+  useEffect(() => {
+    if (selectedMovie) {
+      setPosterLoaded(false);
+    }
+  }, [selectedMovie]);
   const dropBall = () => {
     if (!engineRef.current || isDropping) return;
 
@@ -304,18 +310,29 @@ export default function Plinko({ movies }: PlinkoProps) {
         centered
         width={400}
         className='movie-modal'
-        destroyOnClose={true}
+        destroyOnHidden={true}
         maskClosable={true}
         transitionName=''
       >
         {selectedMovie && (
           <div className='modal-content'>
-            {selectedMovie.poster && (
-              <img
-                src={selectedMovie.poster}
-                alt={selectedMovie.title}
-                className='modal-poster'
-              />
+            {selectedMovie.poster ? (
+              <div className='poster-container'>
+                {!posterLoaded && <div className='poster-skeleton'></div>}
+
+                <img
+                  src={selectedMovie.poster}
+                  alt={selectedMovie.title}
+                  className={`modal-poster ${posterLoaded ? 'loaded' : ''}`}
+                  onLoad={() => setPosterLoaded(true)}
+                  onError={() => setPosterLoaded(true)} // Handle load errors
+                />
+              </div>
+            ) : (
+              <div className='modal-poster-placeholder'>
+                <div className='placeholder-icon'>🎬</div>
+                <p className='placeholder-text'>No poster available</p>
+              </div>
             )}
             <h3 className='modal-label'>You should watch</h3>
             <h2 className='modal-title'>{selectedMovie.title}</h2>

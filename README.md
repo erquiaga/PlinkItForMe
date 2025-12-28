@@ -6,9 +6,9 @@ A fun and interactive Letterboxd watchlist picker that uses a physics-based Plin
 
 ## ✨ Features
 
-- 🎯 **Letterboxd Integration** - Scrapes your entire watchlist asynchronously
-- 🎲 **Physics-Based Selection** - Interactive Plinko board using Matter.js
-- 🖼️ **Movie Posters** - Fetches high-quality posters from TMDB API
+- **Letterboxd Integration** - Scrapes your entire watchlist asynchronously
+- **Physics-Based Selection** - Interactive Plinko board using Matter.js
+- **Movie Posters** - Fetches high-quality posters from TMDB API
 
 ## 🛠️ Tech Stack
 
@@ -120,7 +120,7 @@ npm run dev
 
 Frontend will be running at `http://localhost:5173`
 
-## 🎮 Usage
+## Usage
 
 1. **Enter a Letterboxd username** in the search bar
 2. **Wait for movies to load** (first search takes 3-5 seconds, subsequent searches are instant due to caching)
@@ -134,7 +134,7 @@ Frontend will be running at `http://localhost:5173`
 - Sound effects make it more satisfying!
 - Works with any public Letterboxd watchlist
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 plinkitforme/
@@ -205,16 +205,6 @@ Edit `backend/scraper.py`:
 CACHE_EXPIRATION = 21600  # 6 hours in seconds
 ```
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -231,10 +221,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 This is an independent project and is not affiliated with, endorsed by, or connected to Letterboxd.
-
-## 📧 Contact
-
-Questions or suggestions? Feel free to open an issue!
 
 ---
 

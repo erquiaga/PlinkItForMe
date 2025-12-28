@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000',
-});
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface Movie {
   title: string;
@@ -19,8 +17,16 @@ export interface MovieData {
 }
 
 export const scrapeUserMovies = async (
-  username: string
+  username: string,
+  genre?: string,
+  decade?: string
 ): Promise<MovieData> => {
-  const response = await api.get<MovieData>(`/watchlist/${username}`);
+  const params: Record<string, string> = {};
+  if (genre) params.genre = genre;
+  if (decade) params.decade = decade;
+
+  const response = await axios.get(`${API_BASE_URL}/watchlist/${username}`, {
+    params,
+  });
   return response.data;
 };

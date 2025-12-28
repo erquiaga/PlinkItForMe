@@ -102,3 +102,55 @@
   color: #ff8000; /* Orange */
   font-weight: 700;
 }
+
+.filters-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 15px;
+  margin-bottom: 20px;
+}
+
+.filters-container .ant-select {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filters-container .ant-select:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.clickable:hover {
+  opacity: 0.7;
+}
+
+.advanced-options-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #40bcf4;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 20px 0;
+  user-select: none;
+}
+
+.advanced-options-toggle:hover {
+  opacity: 0.8;
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+  display: inline-block;
+  font-size: 12px;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}

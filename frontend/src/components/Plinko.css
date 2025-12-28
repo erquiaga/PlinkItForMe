@@ -112,13 +112,79 @@
   text-align: center;
 }
 
+/* Poster container for positioning */
+.poster-container {
+  position: relative;
+  width: 230px;
+  height: 345px;
+  margin: 0 auto 20px auto;
+}
+
+/* Skeleton loader */
+.poster-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #2c3440 0%, #3a4150 50%, #2c3440 100%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Actual poster - hidden until loaded */
 .modal-poster {
   width: 100%;
-  max-width: 230px;
+  height: 100%;
   border-radius: 4px;
-  margin: 0 auto 20px auto;
-  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Fade in when loaded */
+.modal-poster.loaded {
+  opacity: 1;
+}
+
+/* No poster placeholder (from before) */
+.modal-poster-placeholder {
+  width: 230px;
+  height: 345px;
+  margin: 0 auto 20px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2c3440 0%, #1a1f2e 100%);
+  border: 2px dashed #40bcf4;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.placeholder-icon {
+  font-size: 64px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  color: #9ab;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .modal-label {
