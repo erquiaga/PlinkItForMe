@@ -3,6 +3,7 @@
   text-align: center;
   margin: 20px auto;
   max-width: 800px;
+  padding: 0 10px;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
@@ -70,13 +71,21 @@
   box-shadow: 0 0 20px rgba(64, 188, 244, 0.2),
     inset 0 0 40px rgba(0, 0, 0, 0.3);
   max-width: 100%;
+  margin: 0 auto;
+}
+
+.canvas-container canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Movie Labels */
 .movie-labels {
   display: flex;
   justify-content: space-around;
-  width: 800px;
+  max-width: 800px;
+  width: 100%;
   margin: 10px auto 0 auto;
   padding: 10px 0;
   gap: 5px;
@@ -259,26 +268,35 @@
 
 /* Mobile Responsive */
 @media (max-width: 600px) {
+  .plinko-container {
+    padding: 0 5px;
+  }
+
   .movie-labels {
-    font-size: 10px;
+    font-size: 9px;
     gap: 2px;
-    width: 100%;
+    padding: 8px 0;
   }
 
   .movie-label {
-    padding: 4px 2px;
-    max-width: none;
+    padding: 6px 2px;
+    font-size: 9px;
   }
 
   .button-container {
     flex-direction: column;
     gap: 10px;
+    padding: 0 10px;
   }
 
   .drop-button,
   .shuffle-button {
     width: 100%;
     font-size: 14px;
-    padding: 10px 20px;
+    padding: 12px 20px;
+  }
+
+  .canvas-container {
+    border-width: 2px;
   }
 }
