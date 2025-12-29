@@ -44,19 +44,12 @@ function App() {
     setError(null);
     setMovieData(null);
 
-    console.log('Searching with filters:', {
-      username: searchUsername.trim(),
-      genre: selectedGenre,
-      decade: selectedDecade,
-    });
-
     try {
       const result = await scrapeUserMovies(
         searchUsername.trim(),
         selectedGenre,
         selectedDecade
       );
-      console.log('Received movies:', result);
       setMovieData(result);
     } catch (err: unknown) {
       const error = err as {
