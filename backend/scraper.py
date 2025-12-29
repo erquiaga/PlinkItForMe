@@ -181,7 +181,7 @@ def get_movie_data(movie_title, movie_year):
     params = {
         'api_key': TMDB_API_KEY,
         'query': movie_title,
-        'primary_release_year': movie_year
+        'year': movie_year
     }
     
     try:
