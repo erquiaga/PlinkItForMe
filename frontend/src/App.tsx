@@ -5,6 +5,8 @@ import { scrapeUserMovies, type MovieData } from './api/Api';
 import Plinko from './components/Plinko';
 import LoadingSpinner from './components/LoadingSpinner';
 import { Genre, Decade } from './constants/LetterboxdFilters';
+import HowItWorksModal from './components/HowItWorksModal';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
 
@@ -21,6 +23,7 @@ function App() {
   );
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
+  const [showHowItWorks, setShowHowItWorks] = useState<boolean>(false);
 
   const handleReset = () => {
     setMovieData(null);
@@ -91,26 +94,40 @@ function App() {
 
   return (
     <div className='app-container'>
-      <h1 className='app-title clickable' onClick={handleReset}>
-        <span className='title-orange'>PLINK</span>{' '}
-        <span className='title-green'>IT FOR</span>{' '}
-        <span className='title-blue'>ME</span>
-      </h1>
+      <div className='header-section'>
+        <div className='title-container'>
+          <h1 className='app-title clickable' onClick={handleReset}>
+            <span className='title-orange'>PLINK</span>{' '}
+            <span className='title-green'>IT FOR</span>{' '}
+            <span className='title-blue'>ME</span>
+          </h1>
 
-      <p className='app-subtitle'>
-        Enter a{' '}
-        <a
-          href='https://letterboxd.com'
-          target='_blank'
-          rel='noopener noreferrer'
-          className='letterboxd-link'
-        >
-          Letterboxd
-        </a>{' '}
-        username, and we will pick a movie for you using{' '}
-        <span className='plinko-text'>PLINKO</span>!
-      </p>
+          <div
+            className='how-it-works-icon'
+            onClick={() => setShowHowItWorks(true)}
+          >
+            <QuestionCircleOutlined />
+          </div>
+        </div>
 
+        <h2 className='app-description'>
+          Random Movie Picker for Your Letterboxd Watchlist
+        </h2>
+
+        <p className='app-subtitle'>
+          Enter a{' '}
+          <a
+            href='https://letterboxd.com'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='letterboxd-link'
+          >
+            Letterboxd
+          </a>{' '}
+          username, and we will pick a movie for you using{' '}
+          <span className='plinko-text'>PLINKO</span>!
+        </p>
+      </div>
       <div className='search-container'>
         <Search
           placeholder='enter username'
@@ -176,7 +193,7 @@ function App() {
 
       {loading && <LoadingSpinner />}
 
-      {error && <Alert type='error' message={error} className='error-alert' />}
+      {error && <Alert type='error' title={error} className='error-alert' />}
 
       {movieData && movieData.movies.length >= 5 && (
         <Plinko movies={movieData.movies} />
@@ -209,6 +226,10 @@ function App() {
           />
         </a>
       </footer>
+      <HowItWorksModal
+        visible={showHowItWorks}
+        onClose={() => setShowHowItWorks(false)}
+      />
     </div>
   );
 }
