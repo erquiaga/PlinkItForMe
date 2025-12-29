@@ -86,7 +86,7 @@
 }
 
 .letterboxd-link:hover {
-  color: #00ff5e;
+  color: #40bcf4;
 }
 
 .plinko-text {
@@ -153,4 +153,22 @@
 
 .arrow.open {
   transform: rotate(180deg);
+}
+
+.donation-container {
+  text-align: center;
+}
+
+.donation-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #ff5e5b;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.donation-link:hover {
+  color: #9ab;
 }

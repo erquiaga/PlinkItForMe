@@ -183,6 +183,16 @@ function App() {
       )}
 
       <footer className='app-footer'>
+        <div className='donation-container'>
+          <a
+            href='https://ko-fi.com/plinkitforme'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='donation-link'
+          >
+            ☕ Support on Ko-fi
+          </a>
+        </div>
         <p>
           This product uses the TMDB API but is not endorsed or certified by
           TMDB.
