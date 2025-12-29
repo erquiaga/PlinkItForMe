@@ -33,19 +33,19 @@
 }
 
 .steps-list li:nth-child(1)::before {
-  background: #ff6b35; /* Orange */
+  background: #ff8000;
 }
 
 .steps-list li:nth-child(2)::before {
-  background: #00d9a3; /* Green */
+  background: #00e054;
 }
 
 .steps-list li:nth-child(3)::before {
-  background: #4ecdc4; /* Blue */
+  background: #40bcf4;
 }
 
 .steps-list li:nth-child(4)::before {
-  background: #ff6b35; /* Orange */
+  background: #ff8000;
 }
 
 .steps-list li strong {
