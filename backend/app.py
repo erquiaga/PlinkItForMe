@@ -12,6 +12,8 @@ app.add_middleware(
         "http://localhost:5173",
         "https://*.vercel.app",
         "https://plink-it-for-me.vercel.app",
+        "https://plinkitforme.com",
+        "https://www.plinkitforme.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
