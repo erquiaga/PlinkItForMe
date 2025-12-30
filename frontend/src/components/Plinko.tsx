@@ -202,7 +202,7 @@ export default function Plinko({ movies }: PlinkoProps) {
         height: config.canvasHeight,
         wireframes: false,
         background: COLORS.background,
-        pixelRatio: isMobile ? 0.5 : window.devicePixelRatio,
+        pixelRatio: isMobile ? 1 : window.devicePixelRatio,
       },
     });
 
@@ -265,7 +265,7 @@ export default function Plinko({ movies }: PlinkoProps) {
             setSelectedMovie(shuffledMovies[slotIndex]);
             setIsModalOpen(true);
 
-            if (!isMobile && coinSoundRef.current) {
+            if (coinSoundRef.current) {
               coinSoundRef.current.currentTime = 0;
               coinSoundRef.current.play().catch(() => {});
             }
