@@ -15,17 +15,19 @@ const COLORS = {
   background: '#14181c',
 };
 
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 const BASE_CONFIG = {
   canvasWidth: 800,
   canvasHeight: 500,
-  gravity: 1.2,
-  pegRows: 9,
+  gravity: isMobile ? 1.0 : 1.2,
+  pegRows: isMobile ? 7 : 9,
   pegSpacing: 80,
   pegRadius: 4,
   ballRadius: 15,
-  ballRestitution: 0.5,
+  ballRestitution: isMobile ? 0.4 : 0.5,
   ballFriction: 0.01,
-  ballAirResistance: 0.008,
+  ballAirResistance: isMobile ? 0.01 : 0.008,
   ballDensity: 0.0008,
 };
 
@@ -114,7 +116,7 @@ function createStaticBodies(canvasWidth: number, canvasHeight: number) {
   return {
     ground: Matter.Bodies.rectangle(
       canvasWidth / 2,
-      canvasHeight - 5,
+      canvasHeight + 10,
       canvasWidth + 20,
       30,
       {
@@ -187,6 +189,11 @@ export default function Plinko({ movies }: PlinkoProps) {
     engineRef.current = engine;
     engine.world.gravity.y = config.gravity;
 
+    if (isMobile) {
+      engine.positionIterations = 4;
+      engine.velocityIterations = 4;
+    }
+
     const render = Matter.Render.create({
       element: sceneRef.current,
       engine: engine,
@@ -195,6 +202,7 @@ export default function Plinko({ movies }: PlinkoProps) {
         height: config.canvasHeight,
         wireframes: false,
         background: COLORS.background,
+        pixelRatio: isMobile ? 1 : window.devicePixelRatio,
       },
     });
 
@@ -279,7 +287,10 @@ export default function Plinko({ movies }: PlinkoProps) {
       });
     });
 
-    const runner = Matter.Runner.create();
+    const runner = Matter.Runner.create({
+      delta: isMobile ? 1000 / 30 : 1000 / 60,
+    });
+
     Matter.Runner.run(runner, engine);
     Matter.Render.run(render);
 
