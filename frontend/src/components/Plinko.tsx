@@ -20,14 +20,14 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const BASE_CONFIG = {
   canvasWidth: 800,
   canvasHeight: 500,
-  gravity: isMobile ? 1.0 : 1.2,
-  pegRows: isMobile ? 7 : 9,
+  gravity: isMobile ? 0.8 : 1.2,
+  pegRows: isMobile ? 6 : 9,
   pegSpacing: 80,
   pegRadius: 4,
   ballRadius: 15,
-  ballRestitution: isMobile ? 0.4 : 0.5,
+  ballRestitution: isMobile ? 0.3 : 0.5,
   ballFriction: 0.01,
-  ballAirResistance: isMobile ? 0.01 : 0.008,
+  ballAirResistance: isMobile ? 0.015 : 0.008,
   ballDensity: 0.0008,
 };
 
@@ -190,8 +190,8 @@ export default function Plinko({ movies }: PlinkoProps) {
     engine.world.gravity.y = config.gravity;
 
     if (isMobile) {
-      engine.positionIterations = 4;
-      engine.velocityIterations = 4;
+      engine.positionIterations = 3;
+      engine.velocityIterations = 3;
     }
 
     const render = Matter.Render.create({
@@ -202,7 +202,7 @@ export default function Plinko({ movies }: PlinkoProps) {
         height: config.canvasHeight,
         wireframes: false,
         background: COLORS.background,
-        pixelRatio: isMobile ? 1 : window.devicePixelRatio,
+        pixelRatio: isMobile ? 0.5 : window.devicePixelRatio,
       },
     });
 
@@ -227,8 +227,9 @@ export default function Plinko({ movies }: PlinkoProps) {
     ]);
 
     Matter.Events.on(engine, 'collisionStart', (event) => {
-      const now = Date.now();
+      if (isMobile) return;
 
+      const now = Date.now();
       if (now - lastSoundTime.current < 50) return;
 
       event.pairs.forEach((pair) => {
@@ -264,7 +265,7 @@ export default function Plinko({ movies }: PlinkoProps) {
             setSelectedMovie(shuffledMovies[slotIndex]);
             setIsModalOpen(true);
 
-            if (coinSoundRef.current) {
+            if (!isMobile && coinSoundRef.current) {
               coinSoundRef.current.currentTime = 0;
               coinSoundRef.current.play().catch(() => {});
             }
@@ -288,7 +289,7 @@ export default function Plinko({ movies }: PlinkoProps) {
     });
 
     const runner = Matter.Runner.create({
-      delta: isMobile ? 1000 / 30 : 1000 / 60,
+      delta: isMobile ? 1000 / 24 : 1000 / 60,
     });
 
     Matter.Runner.run(runner, engine);
