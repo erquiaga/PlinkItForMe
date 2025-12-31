@@ -15,29 +15,32 @@ const COLORS = {
   background: '#14181c',
 };
 
+// Detect if user is on mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+// MOBILE CONFIGURATION
 const MOBILE_CONFIG = {
-  canvasWidth: 375,
-  canvasHeight: 600,
-  gravity: 1.0,
-  pegRows: 7,
-  pegSpacing: 40,
-  pegRadius: 5,
-  ballRadius: 12,
-  ballRestitution: 0.5,
-  ballFriction: 0,
-  ballDensity: 1.0,
-  pegStartY: 80,
-  pegEndY: 400,
+  canvasWidth: 375, // Fixed width for mobile screens
+  canvasHeight: 550, // Reduced height to prevent too much scrolling
+  gravity: 1.0, // Physics gravity strength
+  pegRows: 7, // Number of horizontal peg rows
+  pegSpacing: 40, // Horizontal pixels between pegs
+  pegRadius: 4, // Peg circle size
+  ballRadius: 12, // Ball circle size
+  ballRestitution: 0.5, // Bounciness (0 = no bounce, 1 = perfect bounce)
+  ballFriction: 0, // Surface friction (0 = slippery)
+  ballDensity: 1.0, // Ball mass/weight (higher = heavier)
+  pegStartY: 150, // Y position where pegs start
+  pegEndY: 340, // Y position where pegs end (creates vertical spacing)
 };
 
+// DESKTOP CONFIGURATION
 const DESKTOP_CONFIG = {
   canvasWidth: 800,
   canvasHeight: 500,
   gravity: 1.0,
-  pegRows: 9,
-  pegSpacing: 80,
+  pegRows: 9, // More rows since we have more vertical space
+  pegSpacing: 80, // More spacing since canvas is wider
   pegRadius: 5,
   ballRadius: 12,
   ballRestitution: 0.5,
@@ -47,21 +50,31 @@ const DESKTOP_CONFIG = {
   pegEndY: 400,
 };
 
+// Select config based on device type
 const CONFIG = isMobile ? MOBILE_CONFIG : DESKTOP_CONFIG;
 
+/**
+ * Creates the grid of pegs that the ball bounces off
+ * @param config - The device-specific configuration (mobile or desktop)
+ * @returns Array of Matter.js peg bodies
+ */
 function createPegs(config: typeof CONFIG): Matter.Body[] {
   const pegs: Matter.Body[] = [];
-  const numPegs = 9;
+  const numPegs = 9; // Number of pegs per row
 
+  // Calculate the total width needed for all pegs
   const totalPegWidth = (numPegs - 1) * config.pegSpacing;
 
+  // Account for alternating row offset when centering
   const maxOffset = config.pegSpacing / 2;
   const startX = (config.canvasWidth - totalPegWidth - maxOffset) / 2;
 
+  // Calculate vertical spacing to fit pegRows between pegStartY and pegEndY
   const verticalSpace = config.pegEndY - config.pegStartY;
   const verticalSpacing = verticalSpace / (config.pegRows - 1);
 
   for (let row = 0; row < config.pegRows; row++) {
+    // Alternate rows are offset by half the peg spacing (creates zigzag pattern)
     const offset = (row % 2) * (config.pegSpacing / 2);
 
     for (let col = 0; col < numPegs; col++) {
@@ -69,9 +82,9 @@ function createPegs(config: typeof CONFIG): Matter.Body[] {
       const y = config.pegStartY + row * verticalSpacing;
 
       const peg = Matter.Bodies.circle(x, y, config.pegRadius, {
-        isStatic: true,
-        restitution: 0.5,
-        friction: 0,
+        isStatic: true, // Pegs don't move
+        restitution: 0.5, // Some bounce when ball hits
+        friction: 0, // No friction
         render: { fillStyle: COLORS.orange },
       });
       pegs.push(peg);
@@ -80,21 +93,30 @@ function createPegs(config: typeof CONFIG): Matter.Body[] {
 
   return pegs;
 }
+
+/**
+ * Creates the vertical dividers at the bottom (the "bins" where balls land)
+ * @param movieCount - Number of movies (determines number of slots)
+ * @param canvasWidth - Width of canvas
+ * @param canvasHeight - Height of canvas
+ * @returns Array of Matter.js divider bodies
+ */
 function createSlots(
   movieCount: number,
   canvasWidth: number,
   canvasHeight: number
 ): Matter.Body[] {
-  const slotWidth = canvasWidth / movieCount;
+  const slotWidth = canvasWidth / movieCount; // Each movie gets equal width
   const slots: Matter.Body[] = [];
-  const slotY = canvasHeight - 40;
-  const slotHeight = 80;
+  const slotY = canvasHeight - 50; // Position from bottom
+  const slotHeight = 100; // Height of divider walls
 
+  // Create dividers (need movieCount + 1 dividers to create movieCount slots)
   for (let i = 0; i <= movieCount; i++) {
     const divider = Matter.Bodies.rectangle(
       i * slotWidth,
       slotY,
-      3,
+      3, // Divider thickness
       slotHeight,
       {
         isStatic: true,
@@ -109,6 +131,12 @@ function createSlots(
   return slots;
 }
 
+/**
+ * Creates the walls and floor that contain the physics simulation
+ * @param canvasWidth - Width of canvas
+ * @param canvasHeight - Height of canvas
+ * @returns Object containing ground, leftWall, and rightWall bodies
+ */
 function createStaticBodies(canvasWidth: number, canvasHeight: number) {
   return {
     ground: Matter.Bodies.rectangle(
@@ -138,6 +166,11 @@ function createStaticBodies(canvasWidth: number, canvasHeight: number) {
   };
 }
 
+/**
+ * Fisher-Yates shuffle algorithm to randomize movie order
+ * @param array - Array to shuffle
+ * @returns New shuffled array (doesn't mutate original)
+ */
 function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -153,6 +186,7 @@ export default function Plinko({ movies }: PlinkoProps) {
   const popSoundRef = useRef<HTMLAudioElement | null>(null);
   const coinSoundRef = useRef<HTMLAudioElement | null>(null);
   const lastSoundTime = useRef(0);
+
   const [shuffledMovies, setShuffledMovies] = useState<Movie[]>(movies);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isDropping, setIsDropping] = useState(false);
@@ -163,9 +197,11 @@ export default function Plinko({ movies }: PlinkoProps) {
     setShuffledMovies(movies);
   }, [movies]);
 
+  // Main physics engine setup - runs once when movies change
   useEffect(() => {
     if (!sceneRef.current) return;
 
+    // Load sound effects
     coinSoundRef.current = new Audio('/sounds/sf2_coin.mp3');
     coinSoundRef.current.volume = 0.5;
 
@@ -174,10 +210,12 @@ export default function Plinko({ movies }: PlinkoProps) {
       popSoundRef.current.volume = 0.3;
     }
 
+    // Create Matter.js physics engine
     const engine = Matter.Engine.create();
     engineRef.current = engine;
-    engine.world.gravity.y = CONFIG.gravity;
+    engine.gravity.y = CONFIG.gravity;
 
+    // Create visual renderer
     const render = Matter.Render.create({
       element: sceneRef.current,
       engine: engine,
@@ -193,6 +231,7 @@ export default function Plinko({ movies }: PlinkoProps) {
       },
     });
 
+    // Create all physics bodies
     const { ground, leftWall, rightWall } = createStaticBodies(
       CONFIG.canvasWidth,
       CONFIG.canvasHeight
@@ -204,6 +243,7 @@ export default function Plinko({ movies }: PlinkoProps) {
       CONFIG.canvasHeight
     );
 
+    // Add all bodies to the physics world
     Matter.World.add(engine.world, [
       ground,
       leftWall,
@@ -212,11 +252,12 @@ export default function Plinko({ movies }: PlinkoProps) {
       ...slots,
     ]);
 
+    // Collision sound handler (desktop only)
     Matter.Events.on(engine, 'collisionStart', (event) => {
-      if (isMobile) return;
+      if (isMobile) return; // Skip on mobile for performance
 
       const now = Date.now();
-      if (now - lastSoundTime.current < 50) return;
+      if (now - lastSoundTime.current < 50) return; // Throttle sounds
 
       event.pairs.forEach((pair) => {
         const isBallCollision =
@@ -233,34 +274,41 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     const slotWidth = CONFIG.canvasWidth / shuffledMovies.length;
 
+    // Check ball position each physics update
     Matter.Events.on(engine, 'afterUpdate', () => {
       const balls = engine.world.bodies.filter((body) => body.label === 'ball');
 
       balls.forEach((ball) => {
         const settlementY = CONFIG.canvasHeight - 100;
 
+        // Check if ball has settled in a slot (low velocity near bottom)
         const isSettled =
           ball.position.y > settlementY &&
           Math.abs(ball.velocity.x) < 0.5 &&
           Math.abs(ball.velocity.y) < 0.5;
 
         if (isSettled) {
+          // Determine which slot the ball landed in
           const slotIndex = Math.floor(ball.position.x / slotWidth);
 
           if (slotIndex >= 0 && slotIndex < shuffledMovies.length) {
+            // Show the selected movie
             setSelectedMovie(shuffledMovies[slotIndex]);
             setIsModalOpen(true);
 
+            // Play coin sound
             if (coinSoundRef.current) {
               coinSoundRef.current.currentTime = 0;
               coinSoundRef.current.play().catch(() => {});
             }
 
+            // Clean up
             setIsDropping(false);
             Matter.World.remove(engine.world, ball);
           }
         }
 
+        // Remove balls that fall out of bounds
         const isOutOfBounds =
           ball.position.y > CONFIG.canvasHeight + 100 ||
           ball.position.x < -50 ||
@@ -273,13 +321,16 @@ export default function Plinko({ movies }: PlinkoProps) {
       });
     });
 
+    // Create physics runner (60fps)
     const runner = Matter.Runner.create({
-      delta: 1000 / 60,
+      delta: 1000 / 60, // 60 frames per second
     });
 
+    // Start the simulation
     Matter.Runner.run(runner, engine);
     Matter.Render.run(render);
 
+    // Cleanup when component unmounts or movies change
     return () => {
       Matter.Render.stop(render);
       Matter.Runner.stop(runner);
@@ -288,12 +339,17 @@ export default function Plinko({ movies }: PlinkoProps) {
     };
   }, [shuffledMovies]);
 
+  // Reset poster loaded state when movie changes
   useEffect(() => {
     if (selectedMovie) {
       setPosterLoaded(false);
     }
   }, [selectedMovie]);
 
+  /**
+   * Drops a ball into the Plinko board
+   * Creates randomized starting position and velocity for varied outcomes
+   */
   const dropBall = () => {
     if (!engineRef.current || isDropping) return;
 
@@ -302,12 +358,15 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     const world = engineRef.current.world;
 
+    // Remove any existing balls
     const oldBalls = world.bodies.filter((body) => body.label === 'ball');
     Matter.World.remove(world, oldBalls);
 
+    // Random starting X position (within middle 60% of canvas)
     const randomX =
       CONFIG.canvasWidth * 0.2 + Math.random() * CONFIG.canvasWidth * 0.6;
 
+    // Create the ball
     const ball = Matter.Bodies.circle(randomX, 30, CONFIG.ballRadius, {
       restitution: CONFIG.ballRestitution,
       friction: CONFIG.ballFriction,
@@ -316,11 +375,13 @@ export default function Plinko({ movies }: PlinkoProps) {
       label: 'ball',
     });
 
+    // Add random initial velocity for more varied outcomes
     Matter.Body.setVelocity(ball, {
-      x: (Math.random() - 0.5) * 15,
-      y: Math.random() * 3,
+      x: (Math.random() - 0.5) * 15, // Random horizontal velocity
+      y: Math.random() * 3, // Random downward velocity
     });
 
+    // Add random spin
     Matter.Body.setAngularVelocity(ball, (Math.random() - 0.5) * 0.5);
 
     Matter.World.add(world, ball);
