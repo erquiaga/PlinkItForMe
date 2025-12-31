@@ -17,93 +17,90 @@ const COLORS = {
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const BASE_CONFIG = {
-  canvasWidth: 800,
-  canvasHeight: 500,
-  gravity: isMobile ? 0.8 : 1.2,
-  pegRows: isMobile ? 6 : 9,
-  pegSpacing: 80,
-  pegRadius: 4,
-  ballRadius: 15,
-  ballRestitution: isMobile ? 0.3 : 0.5,
-  ballFriction: 0.01,
-  ballAirResistance: isMobile ? 0.015 : 0.008,
-  ballDensity: 0.0008,
+const MOBILE_CONFIG = {
+  canvasWidth: 375,
+  canvasHeight: 600,
+  gravity: 1.0,
+  pegRows: 7,
+  pegSpacing: 40,
+  pegRadius: 5,
+  ballRadius: 12,
+  ballRestitution: 0.5,
+  ballFriction: 0,
+  ballDensity: 1.0,
+  pegStartY: 80,
+  pegEndY: 400,
 };
 
-function getResponsiveConfig() {
-  const windowWidth = window.innerWidth;
-  const scale = windowWidth < 600 ? windowWidth / 800 : 1;
+const DESKTOP_CONFIG = {
+  canvasWidth: 800,
+  canvasHeight: 500,
+  gravity: 1.0,
+  pegRows: 9,
+  pegSpacing: 80,
+  pegRadius: 5,
+  ballRadius: 12,
+  ballRestitution: 0.5,
+  ballFriction: 0,
+  ballDensity: 1.0,
+  pegStartY: 100,
+  pegEndY: 400,
+};
 
-  return {
-    canvasWidth: BASE_CONFIG.canvasWidth * scale,
-    canvasHeight: BASE_CONFIG.canvasHeight * scale,
-    gravity: BASE_CONFIG.gravity,
-    pegRows: BASE_CONFIG.pegRows,
-    pegSpacing: BASE_CONFIG.pegSpacing * scale,
-    pegRadius: BASE_CONFIG.pegRadius * scale,
-    ballRadius: BASE_CONFIG.ballRadius * scale,
-    ballRestitution: BASE_CONFIG.ballRestitution,
-    ballFriction: BASE_CONFIG.ballFriction,
-    ballAirResistance: BASE_CONFIG.ballAirResistance,
-    ballDensity: BASE_CONFIG.ballDensity,
-    scale,
-  };
-}
+const CONFIG = isMobile ? MOBILE_CONFIG : DESKTOP_CONFIG;
 
-function createPegs(
-  rows: number,
-  spacing: number,
-  config: ReturnType<typeof getResponsiveConfig>
-): Matter.Body[] {
+function createPegs(config: typeof CONFIG): Matter.Body[] {
   const pegs: Matter.Body[] = [];
+  const numPegs = 9;
 
-  for (let row = 0; row < rows; row++) {
-    const offset = (row % 2) * (spacing / 2);
-    const numPegs = 9;
+  const totalPegWidth = (numPegs - 1) * config.pegSpacing;
+
+  const maxOffset = config.pegSpacing / 2;
+  const startX = (config.canvasWidth - totalPegWidth - maxOffset) / 2;
+
+  const verticalSpace = config.pegEndY - config.pegStartY;
+  const verticalSpacing = verticalSpace / (config.pegRows - 1);
+
+  for (let row = 0; row < config.pegRows; row++) {
+    const offset = (row % 2) * (config.pegSpacing / 2);
 
     for (let col = 0; col < numPegs; col++) {
-      const peg = Matter.Bodies.circle(
-        70 * config.scale + offset + col * spacing,
-        100 * config.scale + row * 40 * config.scale,
-        config.pegRadius,
-        {
-          isStatic: true,
-          restitution: 0.6,
-          friction: 0.05,
-          render: { fillStyle: COLORS.orange },
-        }
-      );
+      const x = startX + offset + col * config.pegSpacing;
+      const y = config.pegStartY + row * verticalSpacing;
+
+      const peg = Matter.Bodies.circle(x, y, config.pegRadius, {
+        isStatic: true,
+        restitution: 0.5,
+        friction: 0,
+        render: { fillStyle: COLORS.orange },
+      });
       pegs.push(peg);
     }
   }
 
   return pegs;
 }
-
 function createSlots(
   movieCount: number,
   canvasWidth: number,
-  canvasHeight: number,
-  scale: number
-) {
+  canvasHeight: number
+): Matter.Body[] {
   const slotWidth = canvasWidth / movieCount;
   const slots: Matter.Body[] = [];
-
-  const slotY = canvasHeight - 40 * scale;
-  const slotHeight = 80 * scale;
+  const slotY = canvasHeight - 40;
+  const slotHeight = 80;
 
   for (let i = 0; i <= movieCount; i++) {
     const divider = Matter.Bodies.rectangle(
       i * slotWidth,
       slotY,
-      3 * scale,
+      3,
       slotHeight,
       {
         isStatic: true,
         render: { fillStyle: COLORS.blue },
-        friction: 0.1,
-        restitution: 0.3,
+        friction: 0,
+        restitution: 0.5,
       }
     );
     slots.push(divider);
@@ -161,61 +158,50 @@ export default function Plinko({ movies }: PlinkoProps) {
   const [isDropping, setIsDropping] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
-  const [config, setConfig] = useState(getResponsiveConfig());
 
   useEffect(() => {
     setShuffledMovies(movies);
   }, [movies]);
 
   useEffect(() => {
-    const handleResize = () => {
-      setConfig(getResponsiveConfig());
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
     if (!sceneRef.current) return;
-
-    popSoundRef.current = new Audio('/sounds/pop.mp3');
-    popSoundRef.current.volume = 0.3;
 
     coinSoundRef.current = new Audio('/sounds/sf2_coin.mp3');
     coinSoundRef.current.volume = 0.5;
 
+    if (!isMobile) {
+      popSoundRef.current = new Audio('/sounds/pop.mp3');
+      popSoundRef.current.volume = 0.3;
+    }
+
     const engine = Matter.Engine.create();
     engineRef.current = engine;
-    engine.world.gravity.y = config.gravity;
-
-    if (isMobile) {
-      engine.positionIterations = 3;
-      engine.velocityIterations = 3;
-    }
+    engine.world.gravity.y = CONFIG.gravity;
 
     const render = Matter.Render.create({
       element: sceneRef.current,
       engine: engine,
       options: {
-        width: config.canvasWidth,
-        height: config.canvasHeight,
+        width: CONFIG.canvasWidth,
+        height: CONFIG.canvasHeight,
         wireframes: false,
         background: COLORS.background,
-        pixelRatio: isMobile ? 1 : window.devicePixelRatio,
+        pixelRatio: 1,
+        showAngleIndicator: false,
+        showVelocity: false,
+        showCollisions: false,
       },
     });
 
     const { ground, leftWall, rightWall } = createStaticBodies(
-      config.canvasWidth,
-      config.canvasHeight
+      CONFIG.canvasWidth,
+      CONFIG.canvasHeight
     );
-    const pegs = createPegs(config.pegRows, config.pegSpacing, config);
+    const pegs = createPegs(CONFIG);
     const slots = createSlots(
       shuffledMovies.length,
-      config.canvasWidth,
-      config.canvasHeight,
-      config.scale
+      CONFIG.canvasWidth,
+      CONFIG.canvasHeight
     );
 
     Matter.World.add(engine.world, [
@@ -245,13 +231,13 @@ export default function Plinko({ movies }: PlinkoProps) {
       });
     });
 
-    const slotWidth = config.canvasWidth / shuffledMovies.length;
+    const slotWidth = CONFIG.canvasWidth / shuffledMovies.length;
 
     Matter.Events.on(engine, 'afterUpdate', () => {
       const balls = engine.world.bodies.filter((body) => body.label === 'ball');
 
       balls.forEach((ball) => {
-        const settlementY = config.canvasHeight - 100 * config.scale;
+        const settlementY = CONFIG.canvasHeight - 100;
 
         const isSettled =
           ball.position.y > settlementY &&
@@ -276,10 +262,9 @@ export default function Plinko({ movies }: PlinkoProps) {
         }
 
         const isOutOfBounds =
-          ball.position.y > config.canvasHeight + 50 ||
-          ball.position.y < 0 ||
-          ball.position.x < 0 ||
-          ball.position.x > config.canvasWidth;
+          ball.position.y > CONFIG.canvasHeight + 100 ||
+          ball.position.x < -50 ||
+          ball.position.x > CONFIG.canvasWidth + 50;
 
         if (isOutOfBounds) {
           Matter.World.remove(engine.world, ball);
@@ -289,7 +274,7 @@ export default function Plinko({ movies }: PlinkoProps) {
     });
 
     const runner = Matter.Runner.create({
-      delta: isMobile ? 1000 / 24 : 1000 / 60,
+      delta: 1000 / 60,
     });
 
     Matter.Runner.run(runner, engine);
@@ -301,7 +286,7 @@ export default function Plinko({ movies }: PlinkoProps) {
       Matter.Engine.clear(engine);
       if (render.canvas) render.canvas.remove();
     };
-  }, [shuffledMovies, config]);
+  }, [shuffledMovies]);
 
   useEffect(() => {
     if (selectedMovie) {
@@ -320,28 +305,23 @@ export default function Plinko({ movies }: PlinkoProps) {
     const oldBalls = world.bodies.filter((body) => body.label === 'ball');
     Matter.World.remove(world, oldBalls);
 
-    engineRef.current.timing.timeScale = 1;
+    const randomX =
+      CONFIG.canvasWidth * 0.2 + Math.random() * CONFIG.canvasWidth * 0.6;
 
-    const ball = Matter.Bodies.circle(
-      200 * config.scale + Math.random() * 400 * config.scale,
-      50 * config.scale,
-      config.ballRadius,
-      {
-        isStatic: false,
-        restitution: config.ballRestitution,
-        friction: config.ballFriction,
-        frictionAir: config.ballAirResistance,
-        density: config.ballDensity,
-        render: { fillStyle: COLORS.green },
-        label: 'ball',
-      }
-    );
+    const ball = Matter.Bodies.circle(randomX, 30, CONFIG.ballRadius, {
+      restitution: CONFIG.ballRestitution,
+      friction: CONFIG.ballFriction,
+      density: CONFIG.ballDensity,
+      render: { fillStyle: COLORS.green },
+      label: 'ball',
+    });
 
     Matter.Body.setVelocity(ball, {
-      x: (Math.random() - 0.5) * 12,
-      y: 2,
+      x: (Math.random() - 0.5) * 15,
+      y: Math.random() * 3,
     });
-    Matter.Body.setAngularVelocity(ball, (Math.random() - 0.5) * 0.4);
+
+    Matter.Body.setAngularVelocity(ball, (Math.random() - 0.5) * 0.5);
 
     Matter.World.add(world, ball);
   };

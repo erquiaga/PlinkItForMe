@@ -5,6 +5,7 @@
   max-width: 800px;
   padding: 0 10px;
   font-family: system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none;
 }
 
 /* Button Container */
@@ -299,4 +300,10 @@
   .canvas-container {
     border-width: 2px;
   }
+}
+
+.canvas-container {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
