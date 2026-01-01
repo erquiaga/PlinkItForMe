@@ -18,47 +18,85 @@ const COLORS = {
 // Detect if user is on mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-// MOBILE CONFIGURATION
-const MOBILE_CONFIG = {
-  canvasWidth: 375, // Fixed width for mobile screens
-  canvasHeight: 550, // Reduced height to prevent too much scrolling
-  gravity: 1.0, // Physics gravity strength
-  pegRows: 7, // Number of horizontal peg rows
-  pegSpacing: 40, // Horizontal pixels between pegs
-  pegRadius: 4, // Peg circle size
-  ballRadius: 12, // Ball circle size
-  ballRestitution: 0.5, // Bounciness (0 = no bounce, 1 = perfect bounce)
-  ballFriction: 0, // Surface friction (0 = slippery)
-  ballDensity: 1.0, // Ball mass/weight (higher = heavier)
-  pegStartY: 150, // Y position where pegs start
-  pegEndY: 340, // Y position where pegs end (creates vertical spacing)
-};
+/**
+ * Gets responsive configuration based on current viewport size
+ * Adapts to portrait/landscape and different screen sizes dynamically
+ */
+function getResponsiveConfig() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
 
-// DESKTOP CONFIGURATION
-const DESKTOP_CONFIG = {
-  canvasWidth: 800,
-  canvasHeight: 500,
-  gravity: 1.0,
-  pegRows: 9, // More rows since we have more vertical space
-  pegSpacing: 80, // More spacing since canvas is wider
-  pegRadius: 5,
-  ballRadius: 12,
-  ballRestitution: 0.5,
-  ballFriction: 0,
-  ballDensity: 1.0,
-  pegStartY: 100,
-  pegEndY: 400,
-};
+  // Use mobile layout for screens narrower than 768px
+  const useMobileLayout = viewportWidth < 768;
 
-// Select config based on device type
-const CONFIG = isMobile ? MOBILE_CONFIG : DESKTOP_CONFIG;
+  if (useMobileLayout) {
+    // Detect landscape vs portrait
+    const isLandscape = viewportWidth > viewportHeight;
+
+    if (isLandscape) {
+      // Landscape mobile: Use more width, compact height
+      const canvasWidth = Math.min(viewportWidth - 40, 650);
+      const canvasHeight = 280;
+
+      return {
+        canvasWidth,
+        canvasHeight,
+        gravity: 1.0,
+        pegRows: 4,
+        pegSpacing: canvasWidth / 11,
+        pegRadius: 3,
+        ballRadius: 10,
+        ballRestitution: 0.5,
+        ballFriction: 0,
+        ballDensity: 1.0,
+        pegStartY: 40,
+        pegEndY: 160,
+      };
+    } else {
+      const canvasWidth = Math.min(viewportWidth - 40, 500);
+      const canvasHeight = Math.min(viewportHeight * 0.6, 600);
+
+      return {
+        canvasWidth,
+        canvasHeight,
+        gravity: 1.0,
+        pegRows: 7,
+        pegSpacing: canvasWidth / 10,
+        pegRadius: 4,
+        ballRadius: 12,
+        ballRestitution: 0.5,
+        ballFriction: 0,
+        ballDensity: 1.0,
+        pegStartY: canvasHeight * 0.2,
+        pegEndY: canvasHeight * 0.65,
+      };
+    }
+  } else {
+    return {
+      canvasWidth: 800,
+      canvasHeight: 500,
+      gravity: 1.0,
+      pegRows: 9,
+      pegSpacing: 80,
+      pegRadius: 5,
+      ballRadius: 12,
+      ballRestitution: 0.5,
+      ballFriction: 0,
+      ballDensity: 1.0,
+      pegStartY: 100,
+      pegEndY: 400,
+    };
+  }
+}
 
 /**
  * Creates the grid of pegs that the ball bounces off
  * @param config - The device-specific configuration (mobile or desktop)
  * @returns Array of Matter.js peg bodies
  */
-function createPegs(config: typeof CONFIG): Matter.Body[] {
+function createPegs(
+  config: ReturnType<typeof getResponsiveConfig>
+): Matter.Body[] {
   const pegs: Matter.Body[] = [];
   const numPegs = 9; // Number of pegs per row
 
@@ -74,7 +112,6 @@ function createPegs(config: typeof CONFIG): Matter.Body[] {
   const verticalSpacing = verticalSpace / (config.pegRows - 1);
 
   for (let row = 0; row < config.pegRows; row++) {
-    // Alternate rows are offset by half the peg spacing (creates zigzag pattern)
     const offset = (row % 2) * (config.pegSpacing / 2);
 
     for (let col = 0; col < numPegs; col++) {
@@ -82,9 +119,9 @@ function createPegs(config: typeof CONFIG): Matter.Body[] {
       const y = config.pegStartY + row * verticalSpacing;
 
       const peg = Matter.Bodies.circle(x, y, config.pegRadius, {
-        isStatic: true, // Pegs don't move
-        restitution: 0.5, // Some bounce when ball hits
-        friction: 0, // No friction
+        isStatic: true,
+        restitution: 0.5,
+        friction: 0,
         render: { fillStyle: COLORS.orange },
       });
       pegs.push(peg);
@@ -192,12 +229,28 @@ export default function Plinko({ movies }: PlinkoProps) {
   const [isDropping, setIsDropping] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
+  const [config, setConfig] = useState(getResponsiveConfig());
 
   useEffect(() => {
     setShuffledMovies(movies);
   }, [movies]);
 
-  // Main physics engine setup - runs once when movies change
+  // Handle window resize and orientation changes
+  useEffect(() => {
+    const handleResize = () => {
+      setConfig(getResponsiveConfig());
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  // Main physics engine setup - runs when movies or config changes
   useEffect(() => {
     if (!sceneRef.current) return;
 
@@ -213,15 +266,15 @@ export default function Plinko({ movies }: PlinkoProps) {
     // Create Matter.js physics engine
     const engine = Matter.Engine.create();
     engineRef.current = engine;
-    engine.gravity.y = CONFIG.gravity;
+    engine.gravity.y = config.gravity;
 
     // Create visual renderer
     const render = Matter.Render.create({
       element: sceneRef.current,
       engine: engine,
       options: {
-        width: CONFIG.canvasWidth,
-        height: CONFIG.canvasHeight,
+        width: config.canvasWidth,
+        height: config.canvasHeight,
         wireframes: false,
         background: COLORS.background,
         pixelRatio: 1,
@@ -233,14 +286,14 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     // Create all physics bodies
     const { ground, leftWall, rightWall } = createStaticBodies(
-      CONFIG.canvasWidth,
-      CONFIG.canvasHeight
+      config.canvasWidth,
+      config.canvasHeight
     );
-    const pegs = createPegs(CONFIG);
+    const pegs = createPegs(config);
     const slots = createSlots(
       shuffledMovies.length,
-      CONFIG.canvasWidth,
-      CONFIG.canvasHeight
+      config.canvasWidth,
+      config.canvasHeight
     );
 
     // Add all bodies to the physics world
@@ -272,14 +325,14 @@ export default function Plinko({ movies }: PlinkoProps) {
       });
     });
 
-    const slotWidth = CONFIG.canvasWidth / shuffledMovies.length;
+    const slotWidth = config.canvasWidth / shuffledMovies.length;
 
     // Check ball position each physics update
     Matter.Events.on(engine, 'afterUpdate', () => {
       const balls = engine.world.bodies.filter((body) => body.label === 'ball');
 
       balls.forEach((ball) => {
-        const settlementY = CONFIG.canvasHeight - 100;
+        const settlementY = config.canvasHeight - 100;
 
         // Check if ball has settled in a slot (low velocity near bottom)
         const isSettled =
@@ -310,9 +363,9 @@ export default function Plinko({ movies }: PlinkoProps) {
 
         // Remove balls that fall out of bounds
         const isOutOfBounds =
-          ball.position.y > CONFIG.canvasHeight + 100 ||
+          ball.position.y > config.canvasHeight + 100 ||
           ball.position.x < -50 ||
-          ball.position.x > CONFIG.canvasWidth + 50;
+          ball.position.x > config.canvasWidth + 50;
 
         if (isOutOfBounds) {
           Matter.World.remove(engine.world, ball);
@@ -330,14 +383,14 @@ export default function Plinko({ movies }: PlinkoProps) {
     Matter.Runner.run(runner, engine);
     Matter.Render.run(render);
 
-    // Cleanup when component unmounts or movies change
+    // Cleanup when component unmounts or config changes
     return () => {
       Matter.Render.stop(render);
       Matter.Runner.stop(runner);
       Matter.Engine.clear(engine);
       if (render.canvas) render.canvas.remove();
     };
-  }, [shuffledMovies]);
+  }, [shuffledMovies, config]);
 
   // Reset poster loaded state when movie changes
   useEffect(() => {
@@ -364,13 +417,13 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     // Random starting X position (within middle 60% of canvas)
     const randomX =
-      CONFIG.canvasWidth * 0.2 + Math.random() * CONFIG.canvasWidth * 0.6;
+      config.canvasWidth * 0.2 + Math.random() * config.canvasWidth * 0.6;
 
     // Create the ball
-    const ball = Matter.Bodies.circle(randomX, 30, CONFIG.ballRadius, {
-      restitution: CONFIG.ballRestitution,
-      friction: CONFIG.ballFriction,
-      density: CONFIG.ballDensity,
+    const ball = Matter.Bodies.circle(randomX, 30, config.ballRadius, {
+      restitution: config.ballRestitution,
+      friction: config.ballFriction,
+      density: config.ballDensity,
       render: { fillStyle: COLORS.green },
       label: 'ball',
     });
