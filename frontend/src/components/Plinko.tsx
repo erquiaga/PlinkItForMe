@@ -26,26 +26,24 @@ function getResponsiveConfig() {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
 
-  // Use mobile layout for screens narrower than 768px
   const useMobileLayout = viewportWidth < 768;
 
   if (useMobileLayout) {
-    // Detect landscape vs portrait
     const isLandscape = viewportWidth > viewportHeight;
 
     if (isLandscape) {
-      // Landscape mobile: Use more width, compact height
       const canvasWidth = Math.min(viewportWidth - 40, 650);
       const canvasHeight = 280;
+      const pegSpacing = canvasWidth / 11;
 
       return {
         canvasWidth,
         canvasHeight,
         gravity: 1.0,
         pegRows: 4,
-        pegSpacing: canvasWidth / 11,
-        pegRadius: 3,
-        ballRadius: 10,
+        pegSpacing,
+        pegRadius: 5,
+        ballRadius: pegSpacing * 0.22, // Ball diameter = 44% of spacing
         ballRestitution: 0.5,
         ballFriction: 0,
         ballDensity: 1.0,
@@ -55,15 +53,16 @@ function getResponsiveConfig() {
     } else {
       const canvasWidth = Math.min(viewportWidth - 40, 500);
       const canvasHeight = Math.min(viewportHeight * 0.6, 600);
+      const pegSpacing = canvasWidth / 9;
 
       return {
         canvasWidth,
         canvasHeight,
         gravity: 1.0,
         pegRows: 7,
-        pegSpacing: canvasWidth / 10,
-        pegRadius: 4,
-        ballRadius: 12,
+        pegSpacing,
+        pegRadius: 6,
+        ballRadius: pegSpacing * 0.22, // Ball diameter = 44% of spacing
         ballRestitution: 0.5,
         ballFriction: 0,
         ballDensity: 1.0,
@@ -79,12 +78,12 @@ function getResponsiveConfig() {
       pegRows: 9,
       pegSpacing: 80,
       pegRadius: 5,
-      ballRadius: 12,
+      ballRadius: 18, // Diameter = 36/80 = 45% of spacing (was 12, too small!)
       ballRestitution: 0.5,
       ballFriction: 0,
       ballDensity: 1.0,
       pegStartY: 100,
-      pegEndY: 400,
+      pegEndY: 370,
     };
   }
 }
@@ -98,16 +97,19 @@ function createPegs(
   config: ReturnType<typeof getResponsiveConfig>
 ): Matter.Body[] {
   const pegs: Matter.Body[] = [];
-  const numPegs = 9; // Number of pegs per row
+  const numPegs = 9;
 
-  // Calculate the total width needed for all pegs
   const totalPegWidth = (numPegs - 1) * config.pegSpacing;
-
-  // Account for alternating row offset when centering
   const maxOffset = config.pegSpacing / 2;
-  const startX = (config.canvasWidth - totalPegWidth - maxOffset) / 2;
 
-  // Calculate vertical spacing to fit pegRows between pegStartY and pegEndY
+  // Add extra clearance from walls (minimum ball radius + peg radius + safety margin)
+  const wallClearance = config.ballRadius + config.pegRadius + 10;
+  const availableWidth = config.canvasWidth - wallClearance * 2;
+
+  // Center the peg grid with wall clearance
+  const startX =
+    wallClearance + (availableWidth - totalPegWidth - maxOffset) / 2;
+
   const verticalSpace = config.pegEndY - config.pegStartY;
   const verticalSpacing = verticalSpace / (config.pegRows - 1);
 
@@ -188,6 +190,8 @@ function createStaticBodies(canvasWidth: number, canvasHeight: number) {
     ),
     leftWall: Matter.Bodies.rectangle(0, canvasHeight / 2, 10, canvasHeight, {
       isStatic: true,
+      friction: 0,
+      restitution: 0.8,
       render: { fillStyle: COLORS.background },
     }),
     rightWall: Matter.Bodies.rectangle(
@@ -197,6 +201,8 @@ function createStaticBodies(canvasWidth: number, canvasHeight: number) {
       canvasHeight,
       {
         isStatic: true,
+        friction: 0,
+        restitution: 0.8,
         render: { fillStyle: COLORS.background },
       }
     ),
@@ -235,7 +241,6 @@ export default function Plinko({ movies }: PlinkoProps) {
     setShuffledMovies(movies);
   }, [movies]);
 
-  // Handle window resize and orientation changes
   useEffect(() => {
     const handleResize = () => {
       setConfig(getResponsiveConfig());
@@ -254,7 +259,6 @@ export default function Plinko({ movies }: PlinkoProps) {
   useEffect(() => {
     if (!sceneRef.current) return;
 
-    // Load sound effects
     coinSoundRef.current = new Audio('/sounds/sf2_coin.mp3');
     coinSoundRef.current.volume = 0.5;
 
@@ -263,7 +267,6 @@ export default function Plinko({ movies }: PlinkoProps) {
       popSoundRef.current.volume = 0.3;
     }
 
-    // Create Matter.js physics engine
     const engine = Matter.Engine.create();
     engineRef.current = engine;
     engine.gravity.y = config.gravity;
@@ -305,12 +308,11 @@ export default function Plinko({ movies }: PlinkoProps) {
       ...slots,
     ]);
 
-    // Collision sound handler (desktop only)
     Matter.Events.on(engine, 'collisionStart', (event) => {
-      if (isMobile) return; // Skip on mobile for performance
+      if (isMobile) return;
 
       const now = Date.now();
-      if (now - lastSoundTime.current < 50) return; // Throttle sounds
+      if (now - lastSoundTime.current < 50) return;
 
       event.pairs.forEach((pair) => {
         const isBallCollision =
@@ -376,7 +378,7 @@ export default function Plinko({ movies }: PlinkoProps) {
 
     // Create physics runner (60fps)
     const runner = Matter.Runner.create({
-      delta: 1000 / 60, // 60 frames per second
+      delta: 1000 / 60,
     });
 
     // Start the simulation
