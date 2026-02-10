@@ -2,8 +2,6 @@
 
 Can't decide what to watch? Enter your Letterboxd username and let a Plinko board randomly pick a movie from your watchlist.
 
-**Live at: [plinkitforme.com](https://plinkitforme.com)**
-
 ## How It Works
 
 1. Enter any public Letterboxd username
