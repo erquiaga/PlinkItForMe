@@ -68,10 +68,6 @@ Backend runs at `http://localhost:8000`, frontend at `http://localhost:5173`
 - Responsive mobile design
 - TMDB integration for high-quality posters
 
-## Support
-
-Enjoying the app? [Buy me a coffee on Ko-fi!](https://ko-fi.com/plinkitforme) ☕
-
 ## Credits
 
 Movie data from [The Movie Database (TMDB)](https://www.themoviedb.org/). Not endorsed or certified by TMDB.
